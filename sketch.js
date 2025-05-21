@@ -28,10 +28,32 @@ let tomatosoupcan;
 let brownies;
 let peanutbutter;
 let ramen;
-let riceImg;
-let waterImg;
+let ricesack;
+let water;
 let itemButtons = [];
+let hoveredButton = null;
+let draggedButton = null;
 
+function drawLabel(x, y, name,w=0) {
+  textFont(myFont);
+  textSize(12);
+  let padding = 6;
+  let boxW = textWidth(name) + padding * 2;
+  let boxH = 18;
+  
+  let boxX = x + (w / 2) - (boxW / 2); // 아이템 중앙 정렬
+  let boxY = y+20;
+
+  // 반투명 박스
+  fill(225, 100); // 검정 + 투명도
+  noStroke();
+  rect(boxX,boxY, boxW, boxH, 6); // 둥근 모서리
+
+  // 텍스트
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text(name, x + w / 2, boxY + boxH / 2);
+}
 function preload() {
   myFont = loadFont("assets/MedodicaRegular.otf");
   bgImg = loadImage(AS + "background.png");
@@ -49,8 +71,8 @@ function preload() {
   brownies = loadImage(AS + "items/brownies.png");
   peanutbutter = loadImage(AS + "items/peanutbutter.png");
   ramen = loadImage(AS + "items/ramen.png");
-  riceImg = loadImage(AS + "items/ricesack.png");
-  waterImg = loadImage(AS + "items/water.png");
+  ricesack = loadImage(AS + "items/ricesack.png");
+  water = loadImage(AS + "items/water.png");
   for (let i = 1; i <= 7; i++) {
     ittyImgs.push(loadImage(AS + "ittysprite" + i + ".png"));
   }
@@ -58,7 +80,7 @@ function preload() {
     ittypauseImgs.push(loadImage(AS + "ittymarket.ver" + i + ".png"));
   }
 
-  //踰꾪듉�좊뱾
+  //버튼애들
   for (let name of btnNames) {
     const btn1Img = loadImage(`${AS}${name}1.png`);
     const btn2Img = loadImage(`${AS}${name}2.png`);
@@ -82,17 +104,16 @@ function setup() {
   frameRate(60);
   noCursor();
   itemButtons = [
-    { x: 188, y: 119, w: 26, h: 24, img: potatochips },
-    { x: 125, y: 117, w: 29, h: 27, img: bread },
-    { x: 149, y: 117, w:30, h:27, img: bread},
-    { x: 85, y: 121, w: 39, h: 24, img: waterImg },
-    { x: 90, y: 87, w: 40, h: 11, img: jam },
-    { x: 138, y: 86, w: 32, h: 12, img: peanutbutter },
-    { x: 178, y: 82, w: 41, h: 16, img: ramen },
-    { x: 90, y: 176, w: 63, h: 18, img: tomatosoupcan },
-    { x: 161, y: 170, w: 56, h: 24, img: riceImg },
-    { x: 92, y: 43, w: 44, h: 29, img: cereal },
-    { x: 149, y: 50, w: 68, h: 21, img: brownies },
+    { x: 188, y: 119, w: 26, h: 24, img: potatochips, label: "potatochips"},
+    { x: 125, y: 117, w: 59, h: 27, img: bread,label: "bread"},
+    { x: 85, y: 121, w: 39, h: 24, img: water,label: "water" },
+    { x: 90, y: 87, w: 40, h: 11, img: jam,label: "blueberryjam" },
+    { x: 138, y: 86, w: 32, h: 12, img: peanutbutter,label: "peanutbutter" },
+    { x: 178, y: 82, w: 41, h: 16, img: ramen,label:"ramen" },
+    { x: 90, y: 176, w: 63, h: 18, img: tomatosoupcan,label:"tomatosoupcan" },
+    { x: 161, y: 170, w: 56, h: 24, img: ricesack,label: "rice" },
+    { x: 92, y: 43, w: 44, h: 29, img: cereal,label:"cerealbox"},
+    { x: 149, y: 50, w: 68, h: 21, img: brownies,label:"brownies" },
   ];
 
   textFont(myFont);
@@ -101,7 +122,7 @@ function setup() {
     btnImgs[i].x = 0;
     btnImgs[i].y = 0;
   }
-  noCursor()
+  noCursor();
 }
 
 function Playing() {
@@ -116,7 +137,7 @@ function Goback() {
 }
 
 //
-//萸붽컝 洹몃┝
+//뭔갈 그림
 function draw() {
   if (!gameStarted || GoHome) {
     drawTitleScreen();
@@ -125,7 +146,24 @@ function draw() {
   } else {
     drawGame();
     let cartDeltaX = updateCart();
+
+    hoveredButton = null;
+    for (let btn of itemButtons) {
+      if (
+        mouseX >= btn.x &&
+        mouseX <= btn.x + btn.w &&
+        mouseY >= btn.y &&
+        mouseY <= btn.y + btn.h
+      ) {
+        hoveredButton = btn;
+      }
+    }
+
+    draggedButton = null;
     for (let item of cartItems) {
+      if (item.dragging) {
+        draggedButton = item.sourceButton;
+      }
       if (item.inCart && !item.dragging) {
         item.x += cartDeltaX;
       }
@@ -133,10 +171,16 @@ function draw() {
       item.display();
     }
   }
-    image(customCursor, mouseX - 0, mouseY - 0, 20, 20);
+
+  if (hoveredButton && hoveredButton.label) {
+    drawLabel(hoveredButton.x, hoveredButton.y, hoveredButton.label);
+  } else if (draggedButton&&draggedButton.label) {
+    drawLabel(mouseX + 10, mouseY, draggedButton.label);
+  }
+  image(customCursor, mouseX - 0, mouseY - 0, 20, 20);
 }
 
-//濡쒓퀬
+//로고
 
 function drawTitleScreen() {
   image(bgImg, 0, 0, width, height);
@@ -187,20 +231,18 @@ function drawTitleScreen() {
     let currentImg = btn.idleImg;
     if (isPressed) {
       currentImg = btn.clickImg;
-      //湲곕뒫�ｌ뼱�쇳븿
+      //기능넣어야함
     }
     image(currentImg, btn.x, btn.y, btn.w, btn.h);
   }
   image(customCursor, mouseX - 0, mouseY - 0, 20, 20);
 }
 
-//寃뚯엫�붾㈃
-
-let draggedButton = null;
+//게임화면
 
 for (let item of cartItems) {
   if (item.dragging) {
-    draggedButton = item.sourceButton; // �먮뒗 item.name �� 踰꾪듉 �뺣낫
+    draggedButton = item.sourceButton; // 또는 item.name 등 버튼 정보
   }
 }
 function drawGame() {
@@ -242,28 +284,30 @@ function drawGame() {
 }
 
 function mousePressed() {
-  
   for (let item of cartItems) {
     item.pressed(mouseX, mouseY);
-  break;}
+    break;
+  }
   if (!gameStarted) return;
-  for (let btn of itemButtons) { 
+  for (let btn of itemButtons) {
     if (
       mouseX >= btn.x &&
       mouseX <= btn.x + btn.w &&
       mouseY >= btn.y &&
       mouseY <= btn.y + btn.h
-    ) {let grocery = new DraggableItem(mouseX,mouseY, btn.img);
-       grocery.dragging=true;
+    ) {
+      let grocery = new DraggableItem(mouseX, mouseY, btn.img);
+      grocery.dragging = true;
       grocery.offsetX = 0;
       grocery.offsetY = 0;
+      grocery.sourceButton = btn;
+      grocery.label = btn.label;
       cartItems.push(grocery);
-       grocery.sourceButton = btn;
-   }  
-}
- for (let item of cartItems) {
-  item.pressed(mouseX, mouseY);
-}
+    }
+  }
+  for (let item of cartItems) {
+    item.pressed(mouseX, mouseY);
+  }
 }
 
 function mouseReleased() {
@@ -275,7 +319,7 @@ function mouseReleased() {
   }
 }
 
-//寃뚯엫�좉퉸 �뺤�
+//게임잠깐 정지
 function pauseGame() {
   background(229, 124, 217);
 
@@ -334,5 +378,5 @@ function pauseGame() {
   if (pauseFrame >= ittypauseImgs.length) {
     pauseFrame = 0;
   }
-  image(ittypauseImgs[int(pauseFrame)], mouseX+10, mouseY+10, 42, 53);
+  image(ittypauseImgs[int(pauseFrame)], mouseX + 10, mouseY + 10, 42, 53);
 }
