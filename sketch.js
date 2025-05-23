@@ -415,3 +415,19 @@ function pauseGame() {
   }
   image(ittypauseImgs[int(pauseFrame)], mouseX + 10, mouseY + 10, 42, 53);
 }
+
+function touchStarted() {
+  // 마우스랑 동일하게 처리
+  mousePressed();
+  return false; // 모바일 스크롤 방지
+}
+
+function touchEnded() {
+  mouseReleased();
+  return false;
+}
+
+function touchMoved() {
+  mouseDragged();
+  return false;
+}
