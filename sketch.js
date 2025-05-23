@@ -34,32 +34,6 @@ let itemButtons = [];
 let hoveredButton = null;
 let draggedButton = null;
 
-let isTouch = false;
-
-function touchStarted() {
-  isTouch = true;
-  handleClick(mouseX, mouseY);
-  return false;
-}
-
-function mousePressed() {
-  if (!isTouch) handleClick(mouseX, mouseY);
-}
-
-function handleDrag(x, y) {
-  DraggableItem.x = x;
-  DraggableItem.y = y;
-}
-
-function mouseDragged() {
-  handleDrag(mouseX, mouseY);
-}
-
-function touchMoved() {
-  handleDrag(mouseX, mouseY);
-  return false;
-}
-
 function drawLabel(x, y, name,w=0) {
   textFont(myFont);
   textSize(12);
@@ -416,6 +390,15 @@ function pauseGame() {
   image(ittypauseImgs[int(pauseFrame)], mouseX + 10, mouseY + 10, 42, 53);
 }
 
+
+function mouseDragged() {
+  for (let item of cartItems) {
+    if (item.dragging) {
+      item.x = mouseX;
+      item.y = mouseY;
+    }
+  }
+}
 function touchStarted() {
   // 마우스랑 동일하게 처리
   mousePressed();
