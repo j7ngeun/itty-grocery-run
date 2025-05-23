@@ -34,6 +34,32 @@ let itemButtons = [];
 let hoveredButton = null;
 let draggedButton = null;
 
+let isTouch = false;
+
+function touchStarted() {
+  isTouch = true;
+  handleClick(mouseX, mouseY);
+  return false;
+}
+
+function mousePressed() {
+  if (!isTouch) handleClick(mouseX, mouseY);
+}
+
+function handleDrag(x, y) {
+  DraggableItem.x = x;
+  DraggableItem.y = y;
+}
+
+function mouseDragged() {
+  handleDrag(mouseX, mouseY);
+}
+
+function touchMoved() {
+  handleDrag(mouseX, mouseY);
+  return false;
+}
+
 function drawLabel(x, y, name,w=0) {
   textFont(myFont);
   textSize(12);
@@ -284,9 +310,9 @@ function drawGame() {
 }
 
 function mousePressed() {
+  let created = false;
   for (let item of cartItems) {
     item.pressed(mouseX, mouseY);
-    break;
   }
   if (!gameStarted) return;
   for (let btn of itemButtons) {
@@ -303,10 +329,19 @@ function mousePressed() {
       grocery.sourceButton = btn;
       grocery.label = btn.label;
       cartItems.push(grocery);
+      created = true;
+      break;
     }
   }
-  for (let item of cartItems) {
-    item.pressed(mouseX, mouseY);
+  if (!created) {
+    for (let i = cartItems.length - 1; i >= 0; i--) {
+      const item = cartItems[i];
+      item.pressed(mouseX, mouseY);
+      if (item.dragging) {cartItems.splice(i, 1);
+        cartItems.push(item);
+        break;
+      }
+    }
   }
 }
 
