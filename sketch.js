@@ -33,21 +33,24 @@ let water;
 let itemButtons = [];
 let hoveredButton = null;
 let draggedButton = null;
+let totalTime = 60;
+let remainingTime;
+let timerStart;
 
-function drawLabel(x, y, name,w=0) {
+function drawLabel(x, y, name, w = 0) {
   textFont(myFont);
   textSize(12);
   let padding = 6;
   let boxW = textWidth(name) + padding * 2;
   let boxH = 18;
-  
-  let boxX = x + (w / 2) - (boxW / 2); // 아이템 중앙 정렬
-  let boxY = y+20;
+
+  let boxX = x + w / 2 - boxW / 2; // 아이템 중앙 정렬
+  let boxY = y + 20;
 
   // 반투명 박스
   fill(225, 100); // 검정 + 투명도
   noStroke();
-  rect(boxX,boxY, boxW, boxH, 6); // 둥근 모서리
+  rect(boxX, boxY, boxW, boxH, 6); // 둥근 모서리
 
   // 텍스트
   fill(255);
@@ -56,6 +59,7 @@ function drawLabel(x, y, name,w=0) {
 }
 function preload() {
   myFont = loadFont("assets/MedodicaRegular.otf");
+  clock = loadImage(AS + "clock.png");
   bgImg = loadImage(AS + "background.png");
   titleImg = loadImage(AS + "pixelogo.png");
   startIdleImg = loadImage(AS + "play1.png");
@@ -73,6 +77,7 @@ function preload() {
   ramen = loadImage(AS + "items/ramen.png");
   ricesack = loadImage(AS + "items/ricesack.png");
   water = loadImage(AS + "items/water.png");
+  bar = loadImage(AS + "bar.png");
   for (let i = 1; i <= 7; i++) {
     ittyImgs.push(loadImage(AS + "ittysprite" + i + ".png"));
   }
@@ -104,16 +109,16 @@ function setup() {
   frameRate(60);
   noCursor();
   itemButtons = [
-    { x: 188, y: 119, w: 26, h: 24, img: potatochips, label: "potatochips"},
-    { x: 125, y: 117, w: 59, h: 27, img: bread,label: "bread"},
-    { x: 85, y: 121, w: 39, h: 24, img: water,label: "water" },
-    { x: 90, y: 87, w: 40, h: 11, img: jam,label: "blueberryjam" },
-    { x: 138, y: 86, w: 32, h: 12, img: peanutbutter,label: "peanutbutter" },
-    { x: 178, y: 82, w: 41, h: 16, img: ramen,label:"ramen" },
-    { x: 90, y: 176, w: 63, h: 18, img: tomatosoupcan,label:"tomatosoupcan" },
-    { x: 161, y: 170, w: 56, h: 24, img: ricesack,label: "rice" },
-    { x: 92, y: 43, w: 44, h: 29, img: cereal,label:"cerealbox"},
-    { x: 149, y: 50, w: 68, h: 21, img: brownies,label:"brownies" },
+    { x: 188, y: 119, w: 26, h: 24, img: potatochips, label: "potatochips" },
+    { x: 125, y: 117, w: 59, h: 27, img: bread, label: "bread" },
+    { x: 85, y: 121, w: 39, h: 24, img: water, label: "water" },
+    { x: 90, y: 87, w: 40, h: 11, img: jam, label: "blueberryjam" },
+    { x: 138, y: 86, w: 32, h: 12, img: peanutbutter, label: "peanutbutter" },
+    { x: 178, y: 82, w: 41, h: 16, img: ramen, label: "ramen" },
+    { x: 90, y: 176, w: 63, h: 18, img: tomatosoupcan, label: "tomatosoupcan" },
+    { x: 161, y: 170, w: 56, h: 24, img: ricesack, label: "rice" },
+    { x: 92, y: 43, w: 44, h: 29, img: cereal, label: "cerealbox" },
+    { x: 149, y: 50, w: 68, h: 21, img: brownies, label: "brownies" },
   ];
 
   textFont(myFont);
@@ -129,6 +134,8 @@ function Playing() {
   gameStarted = true;
   IsPaused = false;
   GoHome = false;
+  timerStart = millis();
+  remainingTime = totalTime;
 }
 function Goback() {
   gameStarted = false;
@@ -174,7 +181,7 @@ function draw() {
 
   if (hoveredButton && hoveredButton.label) {
     drawLabel(hoveredButton.x, hoveredButton.y, hoveredButton.label);
-  } else if (draggedButton&&draggedButton.label) {
+  } else if (draggedButton && draggedButton.label) {
     drawLabel(mouseX + 10, mouseY, draggedButton.label);
   }
   image(customCursor, mouseX - 0, mouseY - 0, 20, 20);
@@ -239,14 +246,43 @@ function drawTitleScreen() {
 }
 
 //게임화면
-
-for (let item of cartItems) {
-  if (item.dragging) {
-    draggedButton = item.sourceButton; // 또는 item.name 등 버튼 정보
-  }
-}
 function drawGame() {
   image(bgImg, 0, 0, width, height);
+
+  let elapsedMs = millis() - timerStart;
+  let progress = constrain(elapsedMs / (totalTime * 1000), 0, 1);
+
+  if (remainingTime <= 0) {
+    remainingTime = 0;
+  } //여기에 GameOver...화면 추가
+  let barX = 48; // 시계 오른쪽
+  let barY = 17;
+  let dotSizeW = 5;
+  let dotSizeH = 13;
+  let spacing = 5;
+  let totalDots = 40;
+  let filledDots = floor(progress * totalDots);
+
+  for (let i = 0; i < totalDots; i++) {
+    if (i < filledDots) {
+      fill(226, 122, 244); // 채워진 점
+    } else {
+      fill(227, 183, 238, 100); // 남은 점 (회색)
+    }
+    rect(barX + i * spacing, barY, dotSizeW, dotSizeH);
+  }
+
+  let clockX = 10;
+  let clockY = barY - 13;
+  let clockW = 43;
+  let clockH = 41;
+  image(clock, clockX, clockY, clockW, clockH);
+
+  let barImgX = 49;
+  let barImgY = 15;
+  let barImgW = 201;
+  let barImgH = 17;
+  image(bar, barImgX, barImgY, barImgW, barImgH);
 
   ittyFrame += 0.05;
   if (ittyFrame >= ittyImgs.length) {
@@ -311,7 +347,8 @@ function mousePressed() {
     for (let i = cartItems.length - 1; i >= 0; i--) {
       const item = cartItems[i];
       item.pressed(mouseX, mouseY);
-      if (item.dragging) {cartItems.splice(i, 1);
+      if (item.dragging) {
+        cartItems.splice(i, 1);
         cartItems.push(item);
         break;
       }
@@ -326,6 +363,8 @@ function mouseReleased() {
       item.falling = true;
     }
   }
+
+  function Countdown() {}
 }
 
 //게임잠깐 정지
@@ -389,7 +428,6 @@ function pauseGame() {
   }
   image(ittypauseImgs[int(pauseFrame)], mouseX + 10, mouseY + 10, 42, 53);
 }
-
 
 function mouseDragged() {
   for (let item of cartItems) {
